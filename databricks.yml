@@ -1,0 +1,36 @@
+bundle:
+  name: sokoni_pipeline
+
+resources:
+  pipelines:
+    sokoni_pipeline:
+      name: sokoni_pipeline
+      catalog: sokoni_retail
+      schema: lakeflow
+      serverless: true
+      libraries:
+        - file:
+            path: ./src/pipelines/bronze_sales.sql
+        - file:
+            path: ./src/pipelines/silver.sql
+        - file:
+            path: ./src/pipelines/gold_dims.sql
+        - file:
+            path: ./src/pipelines/gold_facts.sql
+
+  jobs:
+    sokoni_daily_refresh:
+      name: sokoni_daily_refresh
+      schedule:
+        quartz_cron_expression: "0 0 2 * * ?"
+        timezone_id: "Africa/Nairobi"
+        pause_status: UNPAUSED
+      tasks:
+        - task_key: run_pipeline
+          pipeline_task:
+            pipeline_id: ${resources.pipelines.sokoni_pipeline.id}
+
+targets:
+  dev:
+    mode: development
+    default: true
